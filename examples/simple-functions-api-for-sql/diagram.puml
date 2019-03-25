@@ -1,0 +1,53 @@
+@startuml
+
+' based on https://github.com/mikebudzynski/apim-lab-2019-ready
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/master/dist
+!includeurl AzurePuml/AzureCommon.puml
+
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Web/AzureAPIManagement.puml
+!includeurl AzurePuml/Databases/AzureRedisCache.puml
+!includeurl AzurePuml/DevOps/AzureApplicationInsights.puml
+!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Networking/AzureTrafficManager.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND
+
+title Serverless REST API for Azure SQL
+
+Person(user, "User")
+
+' Global Service 
+AzureTrafficManager(traffic, "Traffic Manager", "DNS load balancing/failover")
+
+System_Boundary(single-region, "Region based deployment") {
+' Azure services
+    AzureFunction(function, "Azure Function", "python", "Queries the Azure SQL DB")
+    AzureAPIManagement(apimgmt, "Azure API Management", "acts as as a gatekeeper")
+    AzureApplicationInsights(appinsight, "Application Insights", "Provides tooling")
+    AzureRedisCache(redisCache, "Cache", "Standard C2")
+    AzureSqlDatabase(sqlDb, "SQL DB", "Standard S3")
+}
+
+System_Ext(second_region, "Serverless solution", "Different region")
+
+' relationships
+Rel(user,traffic, "Name resolution")
+
+Rel(traffic,apimgmt, "Routes traffic based on geolocation")
+Rel(traffic, second_region, "Name resolution")
+
+Rel(apimgmt,function, "Reads from", "HTTP")
+Rel(apimgmt,redisCache, "Reads from and writes to")
+Rel(apimgmt,appinsight, "Send logs to")
+
+Rel(function, sqlDb, "Reads from", "SQL query")
+
+
+Lay_D(traffic,second_region)
+ 
+@enduml

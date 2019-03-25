@@ -1,0 +1,39 @@
+@startuml Data Ingestion Diagram
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+!define AzurePuml https://raw.githubusercontent.com/RicardoNiepel/Azure-PlantUML/master/dist
+!includeurl AzurePuml/AzureCommon.puml
+
+!includeurl AzurePuml/Compute/AzureFunction.puml
+!includeurl AzurePuml/Web/AzureAPIManagement.puml
+!includeurl AzurePuml/Databases/AzureRedisCache.puml
+!includeurl AzurePuml/DevOps/AzureApplicationInsights.puml
+!includeurl AzurePuml/Databases/AzureSqlDatabase.puml
+!includeurl AzurePuml/Networking/AzureTrafficManager.puml
+!includeurl AzurePuml/Storage/AzureDataLakeStorage.puml
+
+LAYOUT_TOP_DOWN
+' LAYOUT_WITH_LEGEND
+
+title Data Ingestion Diagram
+
+Person(user, "User")
+System_Ext(gstorage, "Google Cloud Storage", "/partition/")
+
+System_Boundary(azure, "Azure"){
+    ' Azure services
+    ' AzureSqlDatabase(sqlDb, "SQL DB", "Standard S3")
+    AzureDataLakeStorage(adls, "Blob/Data Lake Storage", "/raw/partition/, Gen2")
+    AzureDataLakeStorage(adls2, "Blob/Data Lake Storage", "/converted/partition/, Gen2")
+
+    System(queryTools, "Query tools")
+}
+
+' relationships
+Rel(user,queryTools, "Queries data")
+Rel(gstorage,adls, "Imports data from", "Azure Data Factory")
+Rel(adls, adls2, "Azure Data Factory", "(unzipped and possibly converted")
+Rel(queryTools, adls2, "Reads from", "query")
+
+@enduml
